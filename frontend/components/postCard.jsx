@@ -12,7 +12,7 @@ export default function Card({ username, post, text, photo, likesCount, commentC
         try {
             const token = await AsyncStorage.getItem("logedUser")
 
-            const favourite = await fetch(`http:/localhost:3000/post/${id}/like`, {
+            const favourite = await fetch(`https://your-backend.vercel.app/post/${id}/like`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
