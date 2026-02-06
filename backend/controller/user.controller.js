@@ -78,3 +78,16 @@ export const login = async (req, res) => {
         errorMiddleware(err)
     }
 }
+
+export async function getUserId(req, res) {
+    try{
+        res.json({
+            success : true,
+            data : req?.user?._id
+        })
+
+    }
+    catch(err){
+        errorMiddleware(err)
+    }
+}

@@ -1,27 +1,31 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { Camera, PaperPlaneRight, PaperPlaneRightIcon } from "phosphor-react-native"
+import { ActivityIndicator, Button, FlatList, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Camera, PaperPlaneRight, PaperPlaneRightIcon, SelectionBackgroundIcon, XCircleIcon } from "phosphor-react-native"
 import Card from "../components/postCard";
 import * as ImagePicker from "expo-image-picker"
-
+import { BlurView } from "expo-blur";
 
 export default function Home() {
+    const [commentText, setcommentText] = useState("")
+    const [postToComment, setpostToComment] = useState("")
     const [currentUser, setcurrentUser] = useState("")
+    const [showmodal, setshowmodal] = useState(false)
     const [posts, setposts] = useState([])
     const [photouri, setphotouri] = useState(null)
     const [photourl, setphotourl] = useState(null)
     const [posttext, setposttext] = useState("")
     const [loadingPhoto, setloadingPhoto] = useState(false)
-    const ip = "10.209.188.5"
+    const ip = "192.168.31.151"
+  
     async function handlePosts() {
         try {
 
-            const response = await fetch(`http://${ip}:3000/posts`)
+            const response = await fetch(`http://localhost:3000/posts`)
 
             const allPosts = await response.json()
-
+            // console.log(allPosts)
             setposts(allPosts.data)
 
         }
@@ -32,67 +36,97 @@ export default function Home() {
 
     const handleGalleryImage = async () => {
         try {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+            const { status } =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-            if (status != "granted") {
-                alert("Permission denied")
+            if (status !== "granted") {
+                alert("Permission denied");
                 return;
             }
 
-            setloadingPhoto(true)
+
+
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 quality: 0.7,
-            })
-
-            if (result.canceled) {
-                setloadingPhoto(false)
-                return
-            }
-
-
-
-            const formdata = new FormData()
-
-            formdata.append("file", {
-                uri: result?.assets[0]?.uri,
-                name: result?.assets[0]?.name,
-                type: result?.assets[0]?.mimeType
-            }
-
-            )
-
-
-            formdata.append("upload_preset", "mobile_unsigned")
-
-
-
-            const imgUrl = await fetch(`https://api.cloudinary.com/v1_1/dnkfrbwde/image/upload`, {
-                method: "POST",
-                body: formdata,
             });
 
+            if (result.canceled) {
+                setloadingPhoto(false);
+                return;
+            }
+
+            setloadingPhoto(true);
+            const uri = result.assets[0].uri;
+
+            const data = new FormData();
+            data.append("file", {
+                uri: uri,
+                name: "photo.jpg",
+                type: "image/jpeg",
+            });
+
+            data.append("upload_preset", "mobile_unsigned");
+
+            const response = await fetch(
+                "https://api.cloudinary.com/v1_1/dqfnqt5mt/image/upload",
+                {
+                    method: "POST",
+                    body: data,
+                }
+            );
+
+            const imageUrldata = await response.json();
 
 
+            if (!imageUrldata.secure_url) {
+                throw new Error("Upload failed");
+            }
 
-            const imageUrldata = await imgUrl.json();
+            // console.log(imageUrldata.secure_url)
 
-            console.log(imageUrldata)
-            const cloudUrl = imageUrldata.secure_url
-            setphotourl(cloudUrl)
+            setphotourl(imageUrldata.secure_url);
+            setphotouri(uri);
+            setloadingPhoto(false);
+        } catch (err) {
 
-            setphotouri(result?.assets[0]?.uri)
+            setloadingPhoto(false);
+        }
+    };
 
-            setloadingPhoto(false)
+    async function handleComments() {
+
+        try {
+         
+            const token = await AsyncStorage.getItem("logedUser")
+
+            const addComment = await fetch(`http://localhost:3000/post/${postToComment}/comment`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "token": token,
+                    "text": commentText
+                })
+
+            })
+
+
+            const record = await addComment.json()
+
+            console.log(record)
+
 
         }
-
         catch (err) {
-            console.log("Photo Selection error:", err);
-            setloadingPhoto(false)
+            alert(err)
         }
 
+        setcommentText("")
+        setshowmodal(false)
+        handlePosts()
     }
 
     async function submitPost() {
@@ -107,33 +141,59 @@ export default function Home() {
             }
 
             const token = await AsyncStorage.getItem("logedUser")
-
-            const response = await fetch(`http://${ip}:3000/post/create`, {
+        
+            const response = await fetch(`http://localhost:3000/post/create`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     "text": posttext?.trim(),
-                    "photo": photourl?.trim(),
+                    "image": photourl,
                     "token": token
                 })
 
             })
 
-            setposttext("")
-            setphotourl("")
+
+
 
             const data = await response.json()
 
             if (data) {
-                alert(
-                    "POst Added"
-                )
+                alert("POst Added")
             }
         }
         catch (err) {
-            console.log("catch")
+
+            alert(err.message || "Something went wrong")
+        }
+
+        setphotourl(""),
+            setphotouri(""),
+            setposttext("")
+
+        handlePosts()
+    }
+
+    async function getLoggedUserId(token) {
+        try {
+
+            const response = await fetch(`http://localhost:3000/user/id`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "token": token
+                })
+
+            })
+            const userId = await response.json();
+
+            setcurrentUser(userId?.data)
+        }
+        catch (err) {
             alert(err.message || "Something went wrong")
         }
     }
@@ -146,8 +206,9 @@ export default function Home() {
                 router.replace("/login")
             }
             else {
-                setcurrentUser(value)
+
                 handlePosts();
+                getLoggedUserId(value)
             }
         })
     }, [])
@@ -162,8 +223,9 @@ export default function Home() {
                 <View style={style.horizontalLine}></View>
                 <View style={style.cameraContainer}>
                     <TouchableOpacity onPress={handleGalleryImage}>
-                        {photouri ? (
+                        {loadingPhoto ? <ActivityIndicator size="large" /> : photouri ? (
                             <>
+
                                 <Image
                                     source={{ uri: photouri }}
                                     style={{ width: 70, height: 70 }}
@@ -185,12 +247,41 @@ export default function Home() {
 
                 showsVerticalScrollIndicator={false}
                 renderItem={(item) => {
-                    console.log(currentUser)
+    
                     return (
-                        <Card username={item?.item?.creator?.username} text={item?.item?.text} photo={item?.item?.image} likesCount={item?.item?.likesCount || 0} commentCount={item?.item?.commentCount || 0} id={item?.item?._id} liked={item?.item?.likes?.includes(currentUser) ? 1 : 0} handlePosts={handlePosts}></Card>
+                        <Card username={item?.item?.creator?.username} post={item?.item?._id}
+                            text={item?.item?.text} photo={item?.item?.image}
+                            likesCount={item?.item?.likesCount || 0} 
+                            commentCount={item?.item?.commentCount || 0}
+                            id={item?.item?._id}
+                            liked={item?.item?.likes?.includes(currentUser) ? 1 : 0}
+                            handlePosts={handlePosts} setshowmodal={setshowmodal}
+                            handleComment={handleComments} setpostToComment={setpostToComment}></Card>
                     )
                 }}
             ></FlatList>
+
+
+            {showmodal && (
+                <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
+            )}
+            <Modal animationType="fade"
+
+                transparent={true}
+                visible={showmodal}
+            >
+                <View style={style.commentContainer}>
+                    <TouchableOpacity onPress={() => { setshowmodal(!showmodal) }} style={style.commentClose}><XCircleIcon size={27} /></TouchableOpacity>
+                    <View>
+                        <TextInput onChangeText={(value) => {
+                            setcommentText(value)
+                        }} value={commentText} placeholder="Add your comment..."></TextInput>
+                        <View style={style.horizontalLine}></View>
+                    </View>
+                    <Button onPress={handleComments} title="submit"></Button>
+                </View>
+            </Modal>
+
         </View>
     )
 }
@@ -234,5 +325,24 @@ const style = StyleSheet.create({
         borderRadius: 15,
 
 
+    },
+    commentContainer: {
+
+        backgroundColor: "white",
+        width: "70%",
+        position: "absolute",
+        top: "40%",
+        left: "15%",
+        borderRadius: 10,
+        borderColor: "grey",
+        borderWidth: 2,
+        padding: 15,
+        gap: 15
+
+    },
+    commentClose: {
+        position: "absolute",
+        right: 0
     }
+
 })

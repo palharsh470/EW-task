@@ -3,16 +3,16 @@ import { ChatTextIcon, HeartIcon, ThumbsUpIcon, UserCircleIcon, UserIcon } from 
 import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function Card({username, text, photo, likesCount, commentCount,id, liked, handlePosts}) {
-const ip = "10.209.188.5"
-    console.log(liked)
+export default function Card({ username, post, text, photo, likesCount, commentCount, id, liked, handlePosts, setshowmodal, handleComment , setpostToComment}) {
+    const ip = "192.168.31.151"
     const [isliked, setisliked] = useState(liked)
-  async function handleLikes() {
-    
-         try {
+    const [postLikes, setpostLikes] = useState(likesCount)
+    async function handleLikes() {
+
+        try {
             const token = await AsyncStorage.getItem("logedUser")
 
-            const favourite = await fetch(`http://${ip}:3000/post/${id}/like`, {
+            const favourite = await fetch(`http:/localhost:3000/post/${id}/like`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -25,17 +25,24 @@ const ip = "10.209.188.5"
 
 
             const record = await favourite.json()
-            setisliked(true)
+
+     
+
+            setpostLikes(record?.likesCount)
+            setisliked(record?.liked)
 
         }
         catch (err) {
             alert(err)
         }
-  }
+    }
 
-  useState(()=>{
-    handlePosts()
-  },[handleLikes])
+
+
+
+    useState(() => {
+        handlePosts()
+    }, [handleLikes])
     return (
         <View style={styles.postContainer}>
             <View style={styles.usernameContainer}>
@@ -43,27 +50,36 @@ const ip = "10.209.188.5"
                 <Text style={styles.text}>{username}</Text>
             </View>
 
+            {text &&
+                <Text style={{ ...styles.text, fontWeight: "black" }} >{text}</Text>}
 
-            <Text style={{ ...styles.text, fontWeight: "black" }} >{text}</Text>
-
-            <Image
+            {photo && <Image
+                style={styles.photoStyle}
                 source={{ uri: photo }}
-       
-            />
+                resizeMode="contain"
+            />}
 
             <View style={styles.horizontalLine}></View>
             <View style={styles.likeContainer}>
                 <TouchableOpacity onPress={() => {
                     handleLikes()
                 }} style={styles.touchBox}>
-                    <HeartIcon color="red" weight={isliked!=false ? "fill" : "regular"} size={32} />
-                    <Text style={{ ...styles.text, fontSize: 16 }}>{likesCount}</Text>
+                    <HeartIcon color="red" weight={isliked != false ? "fill" : "regular"} size={28} />
+                    <Text style={{ ...styles.text, fontSize: 16 }}>{postLikes}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.touchBox}>
-                    <ChatTextIcon size={32} />
+                <TouchableOpacity style={styles.touchBox} onPress={()=>{
+                    setshowmodal(true)
+                    setpostToComment(post)
+                   
+                }
+                
+                }>
+                    <ChatTextIcon size={28} />
                     <Text style={{ ...styles.text, fontSize: 16 }}>{commentCount}</Text>
                 </TouchableOpacity>
             </View>
+
+            
         </View>
     )
 }
@@ -71,6 +87,7 @@ const ip = "10.209.188.5"
 const styles = StyleSheet.create({
     postContainer: {
         margin: 10,
+        gap: 10,
         padding: 10,
         borderColor: 'lightgrey',
         borderWidth: 2,
@@ -87,7 +104,7 @@ const styles = StyleSheet.create({
         fontWeight: "bold"
     },
     horizontalLine: {
-        marginVertical: 10,
+
         height: 1.5,
         backgroundColor: "lightgrey"
     },
@@ -99,5 +116,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 5
+    },
+    photoStyle: {
+        height: 400,
+        width: 300,
+        alignSelf: "center"
     }
 })

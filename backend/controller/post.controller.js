@@ -126,6 +126,7 @@ export async function addComment(req, res) {
         res.status(201).json({
             success: true,
             comments: postToComment.comments,
+            commentsCount : postToComment?.comments?.length
         });
     } catch (err) {
         errorMiddleware(err)

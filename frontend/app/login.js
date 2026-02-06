@@ -4,7 +4,7 @@ import { StyleSheet, View, TextInput, Text, TouchableOpacity } from "react-nativ
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 export default function Login() {
-    const ip = "172.28.187.5"
+   const ip = "192.168.31.151"
     const [isLogin, setisLogin] = useState(false)
     const [loginEmail, setloginEmail] = useState("");
     const [loginPassword, setloginPassword] = useState("")
@@ -25,7 +25,7 @@ export default function Login() {
                 return
             }
 
-            const response = await fetch(`http:/${ip}:3000/user/login`, {
+            const response = await fetch(`http:/localhost:3000/user/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -70,15 +70,16 @@ export default function Login() {
                 return
             }
 
-            const response = await fetch(`http:/${ip}:3000/user/create`, {
+            const response = await fetch(`http:/localhost:3000/user/create`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ "username": signupUserName, "email": email, "password": signupPassword })
-
+                
             })
             const signupData = await response.json();
+            console.log(signupData)
 
             if (signupData.success == false) {
                 seterr(signupData.message)
