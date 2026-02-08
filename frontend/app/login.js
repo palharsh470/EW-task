@@ -25,7 +25,7 @@ export default function Login() {
                 return
             }
 
-            const response = await fetch(`https://your-backend.vercel.app/user/login`, {
+            const response = await fetch(`https://ew-task.onrender.com/user/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -70,7 +70,7 @@ export default function Login() {
                 return
             }
 
-            const response = await fetch(`https://your-backend.vercel.app/user/create`, {
+            const response = await fetch(`https://ew-task.onrender.com/user/create`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

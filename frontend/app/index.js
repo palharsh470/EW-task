@@ -22,7 +22,7 @@ export default function Home() {
     async function handlePosts() {
         try {
 
-            const response = await fetch(`https://your-backend.vercel.app/posts`)
+            const response = await fetch(`https://ew-task.onrender.com/posts`)
 
             const allPosts = await response.json()
             // console.log(allPosts)
@@ -101,7 +101,7 @@ export default function Home() {
          
             const token = await AsyncStorage.getItem("logedUser")
 
-            const addComment = await fetch(`https://your-backend.vercel.app/post/${postToComment}/comment`, {
+            const addComment = await fetch(`https://ew-task.onrender.com/post/${postToComment}/comment`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -142,7 +142,7 @@ export default function Home() {
 
             const token = await AsyncStorage.getItem("logedUser")
         
-            const response = await fetch(`https://your-backend.vercel.app/post/create`, {
+            const response = await fetch(`https://ew-task.onrender.com/post/create`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -179,7 +179,7 @@ export default function Home() {
     async function getLoggedUserId(token) {
         try {
 
-            const response = await fetch(`https://your-backend.vercel.app/user/id`, {
+            const response = await fetch(`https://ew-task.onrender.com/user/id`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
